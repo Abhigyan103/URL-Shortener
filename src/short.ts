@@ -1,22 +1,26 @@
 import { Router } from "express";
-import { URLs } from "./data";
+import URL from "./schema/URL";
 const router = Router();
 
 router.get('/', (req, res)=>{
-    res.json(URLs);
+    res.json(URL);
 })
 
-router.post('/', (req, res)=>{
-    const url = req.body.url
-    const exists =URLs.find((value)=> value ==url)
-    if(exists) return res.status(400).send('URL exists')
-    const newUrl = generateNewURL()
-    URLs.push({
-        url: url,
-        link: newUrl
+router.post('/', async (req, res)=>{
+    const originalUrl = req.body.url
+    const urlIfExists =await URL.findOne({original:originalUrl})
+    if(urlIfExists){ 
+        res.send(urlIfExists.shortened)
+        return;
+    }
+    const shortenedUrl = generateNewURL()
+    const newUrlObj = new URL({
+        original:originalUrl,
+        shortened:shortenedUrl
     })
-    res.send(newUrl)
-})
+    newUrlObj.save()
+    res.send(newUrlObj.shortened)
+});
 
 const generateNewURL =()=>{
     let newUrl =""
@@ -28,5 +32,3 @@ const generateNewURL =()=>{
 }
 
 export default router
-
-//dog god

@@ -1,7 +1,7 @@
 import express from 'express';
 import shortsRouter from './short';
-import { URLs, URLType } from './data';
-import { PrismaClient } from '@prisma/client';
+import connectDb from './db/connect';
+import URL from './schema/URL';
 const app = express();
 const port = process.env.PORT;
 
@@ -9,35 +9,25 @@ app.use(express.json());
 
 app.use('/short', shortsRouter);
 app.get('/', (req, res) => {
-  res.send(`Hello Yash! ${port}`);
+  res.send(`Hello Yash!`);
 });
 app.get('/not-found', (req, res) => {
   res.status(404).send('Not Found');
 });
-app.get('/:shortUrl', (req, res) => {
+app.get('/:shortUrl',async (req, res) => {
   const shortUrl = req.params.shortUrl
+  console.log(`shortURL : ${shortUrl}`);
   
-  const obj = URLs.find((item: URLType, index: Number, obj)=>{
-    return item.link == shortUrl
-  });
-  if(obj!=null){
-    res.redirect(obj!.url);
+  const urlObj = await URL.findOne({shortened:shortUrl});
+  console.log(`urlObj :${urlObj}`);
+  
+  if(urlObj!=null){
+    res.redirect(urlObj.original);
   }else res.redirect('/not-found');
 });
 
-async function createUsers(){
-  const prisma = new PrismaClient()
-  await prisma.user.create({
-    data:{
-      email:"abc@123",
-      password:"123456",
-      name:"Yash"
-    }
-  })
-  console.log(prisma.user.findMany())
-}
-
-app.listen(port, () => {
-  createUsers()
+app.listen(port, async () => {
+  console.log("Connecting to database...");
+  await connectDb();
   return console.log(`Express is listening at http://localhost:${port}`);
-});
+}); 
