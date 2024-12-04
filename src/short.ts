@@ -8,6 +8,10 @@ router.get('/', (req, res)=>{
 
 router.post('/', async (req, res)=>{
     const originalUrl = req.body.url
+    if(!hasProtocol(originalUrl)){
+        res.status(400).send("Invalid protocol");
+        return;
+    }
     const urlIfExists =await URL.findOne({original:originalUrl})
     if(urlIfExists){ 
         res.send(urlIfExists.shortened)
@@ -29,6 +33,11 @@ const generateNewURL =()=>{
         newUrl += String.fromCharCode('a'.charCodeAt(0) + random)
     }
     return newUrl
+}
+
+function hasProtocol(url: string) {
+    const protocolRegex = /^(https?:\/\/)/i;
+    return protocolRegex.test(url);
 }
 
 export default router
